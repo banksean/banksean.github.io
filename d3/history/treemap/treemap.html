@@ -45,6 +45,20 @@ var pageState = {
 	valueFunc: 'size'
 };
 
+// New history idea: use Object.observe on pageState to make synchronizing easier.
+// Scenario 1: User clicks around, code changes pageState in response while updating UI.
+//		-> Observer automatically updates the browser history
+// Scenario 2: User clicks on a link or back/forward, triggering a
+//		browser history event.
+//		-> deserialize pageState from the URI, call something on the
+//		d3 viz to configure UI to match pageState. e.g. updatePageStateFromUri()
+
+Object.observe(pageState, function(changes) {
+	// Don't really care what in particular changed about pageState,
+	// just push the new one onto the browser history.
+	updateUriFromPagestate(pageState);
+});
+
 var w = 1280 - 80,
     h = 800 - 180,
     x = d3.scale.linear().range([0, w]),
