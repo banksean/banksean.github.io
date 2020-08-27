@@ -62,7 +62,7 @@ class LitBrite extends LitElement {
   }
 
   load() {
-    if (location.search.length != this.pegs.length+1) {
+    if (!location.search) {
       return;
     }
     let pegStr = location.search.substr(1);
