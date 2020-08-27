@@ -3,6 +3,7 @@ import {
   html,
   css
 } from "https://unpkg.com/lit-element/lit-element.js?module";
+import { Huffman } from "./huffman.js";
 
 const numPegs = 12 * (30 + 31); // 24 alternating rows of 30 and 31 cols.
 const colors = [
