@@ -47,11 +47,11 @@ class LitBrite extends LitElement {
     pegs.forEach((peg) => {
       ret += colors.indexOf(peg.color);
     });
-    return Huffman.encode(ret);
+    return Huffman.encodeString(ret);
   }
 
   unpackPegs(pegString) {
-    pegString = Huffman.decode(pegString);
+    pegString = Huffman.decodeString(pegString);
     let ret = [];
     for (let i = 0; i < pegString.length; i++) {
       ret.push({ color: colors[Number(pegString[i])] });
