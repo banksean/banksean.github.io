@@ -47,10 +47,11 @@ class LitBrite extends LitElement {
     pegs.forEach((peg) => {
       ret += colors.indexOf(peg.color);
     });
-    return ret;
+    return Huffman.encode(ret);
   }
 
   unpackPegs(pegString) {
+    pegString = Huffman.decode(pegString);
     let ret = [];
     for (let i = 0; i < pegString.length; i++) {
       ret.push({ color: colors[Number(pegString[i])] });
@@ -59,7 +60,7 @@ class LitBrite extends LitElement {
   }
 
   save() {
-    let pegStr = this.packPegs(this.pegs);
+    let pegStr = encodeURIComponent(this.packPegs(this.pegs));
     history.replaceState({}, location.pathname, '?'+pegStr);
   }
 
@@ -67,7 +68,7 @@ class LitBrite extends LitElement {
     if (!location.search) {
       return;
     }
-    let pegStr = location.search.substr(1);
+    let pegStr = decodeURIComponent(location.search.substr(1));
     this.pegs = this.unpackPegs(pegStr);
   }
 
