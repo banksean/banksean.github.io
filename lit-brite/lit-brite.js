@@ -28,7 +28,7 @@ class LitBrite extends LitElement {
 
   constructor() {
     super();
-    console.log(window.location);
+
     this.pegs = [];
     for (let i = 0; i < numPegs; i++) {
       this.pegs.push({ color: "blank" });
@@ -36,6 +36,7 @@ class LitBrite extends LitElement {
     this.colors = colors.map((c) => {
       return { name: c, count: c == "blank" ? "" : 0 };
     });
+    this.load();
   }
 
   packPegs(pegs) {
@@ -60,6 +61,9 @@ class LitBrite extends LitElement {
   }
 
   load() {
+    if (location.search.length != this.pegs.length+1) {
+      return;
+    }
     let pegStr = location.search.substr(1);
     this.pegs = this.unpackPegs(pegStr);
   }
@@ -81,7 +85,7 @@ class LitBrite extends LitElement {
         align-content: flex-start;
         justify-content: space-around;
       }
-      #clear {
+      button {
         width: 3em;
         height: 3em;
         border-radius: 50%;
@@ -129,6 +133,10 @@ class LitBrite extends LitElement {
     this.colors = [...this.colors];
   }
 
+  saveClicked(evt) {
+    this.save();    
+  }
+
   clearClicked(evt) {
     this.pegs.forEach((peg) => {
       peg.color = "blank";
@@ -151,6 +159,7 @@ class LitBrite extends LitElement {
             <lit-brite-peg .color="${color.name}">${color.count}</lit-brite-peg>
           </label> `
         )}
+        <button id="save" @click=${this.saveClicked}>🔗</button>
         <button id="clear" @click=${this.clearClicked}>🗑️</button>
       </div>
       <div id="peg-grid">
