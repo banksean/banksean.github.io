@@ -4,6 +4,7 @@ import {
   css
 } from "https://unpkg.com/lit-element/lit-element.js?module";
 import { Huffman } from "./huffman.js";
+import { RLE } from "./rle.js";
 
 const numPegs = 12 * (30 + 31); // 24 alternating rows of 30 and 31 cols.
 const colors = [
@@ -40,18 +41,27 @@ class LitBrite extends LitElement {
     this.load();
   }
 
-  // TODO: implement a compact RLE for these peg strings.
-
+  // Returns a query string containing the serialized pegs, given an array of pegs.
   packPegs(pegs) {
     let ret = "";
     pegs.forEach((peg) => {
       ret += colors.indexOf(peg.color);
     });
-    return Huffman.encodeString(ret);
+    let h = Huffman.encode(ret);
+    let r = RLE.encode(ret);
+    if (r.length > h.length) {
+      return 'r=' + encodeURComponent(r);
+    }
+    return 'h=' + encodeURIComponent(h);
   }
 
+  // Returns an array of pegs, given a query string containing the serialized pegs.
   unpackPegs(pegString) {
-    pegString = Huffman.decodeString(pegString);
+    if (pegString.indexOf('h=') == 0) {
+      pegString = Huffman.decode(decodeURIComponent(pegString.substring(2)));
+    } else if (pegString.indexOf('r=') == 0) {
+      pegString = RLE.decode(decodeURIComponent(pegString.substring(2)));
+    }
     let ret = [];
     for (let i = 0; i < pegString.length; i++) {
       ret.push({ color: colors[Number(pegString[i])] });
@@ -60,7 +70,7 @@ class LitBrite extends LitElement {
   }
 
   save() {
-    let pegStr = encodeURIComponent(this.packPegs(this.pegs));
+    let pegStr = this.packPegs(this.pegs);
     history.replaceState({}, location.pathname, '?'+pegStr);
   }
 
@@ -68,7 +78,8 @@ class LitBrite extends LitElement {
     if (!location.search) {
       return;
     }
-    let pegStr = decodeURIComponent(location.search.substr(1));
+    // TODO: smarter parsing for the peg string.
+    let pegStr = location.search.substr(1);
     this.pegs = this.unpackPegs(pegStr);
   }
 
