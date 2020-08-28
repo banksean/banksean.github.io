@@ -36,7 +36,7 @@ class Huffman {
 
     enc.encoded = JSON.stringify([
       enc.charMap,
-      BigInt("0b" + enc.encode(s)).toString(36)
+      BigInt("0b" + enc._encode(s)).toString(36)
     ]);
 
     return enc;
@@ -55,7 +55,7 @@ class Huffman {
     return parts.reduce((r, v) => r * factor + BigInt(parseInt(v, radix)), 0n);
   }
 
-  decode(enc) {
+  _decode(enc) {
     let bi = this._parseBase(enc, 36).toString(2);
     let ret = "";
     let keys = Object.keys(this.bitsMap);
@@ -84,7 +84,7 @@ class Huffman {
       dec.bitsMap[dec.charMap[k].toString(2)] = k;
     });
 
-    dec.decoded = dec.decode(decParts[1]);
+    dec.decoded = dec._decode(decParts[1]);
     return dec;
   }
 
@@ -101,7 +101,7 @@ class Huffman {
     throw "shouldn't get here";
   }
 
-  encode(s) {
+  _encode(s) {
     let ret = "";
     for (let i = 0; i < s.length; i++) {
       ret += this.charMap[s[i]];
@@ -110,14 +110,14 @@ class Huffman {
   }
 
   // Returns a JSON-encoded array that contains [charMap, encodedBitsBase36]
-  static encodeString(s) {
+  static encode(s) {
     let ht = Huffman.newEncoder(s);
     return ht.encoded;
   }
 
   // Parses a JSON-encoded array that contains [charMap, encodedBitsBase36] and
   // returns the original unencoded string.
-  static decodeString(s) {
+  static decode(s) {
     let hd = Huffman.newDecoder(s);
     return hd.decoded;
   }
