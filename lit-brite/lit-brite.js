@@ -51,7 +51,7 @@ class LitBrite extends LitElement {
     let r = RLE.encode(ret);
     console.log('rle len:', r.length, 'huffman len:', h.length);
     if (r.length < h.length) {
-      return 'r=' + encodeURComponent(r);
+      return 'r=' + encodeURIComponent(r);
     }
     return 'h=' + encodeURIComponent(h);
   }
