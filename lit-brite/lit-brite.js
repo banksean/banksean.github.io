@@ -1,91 +1,104 @@
 import {
-  LitElement,
-  html,
-  css
+    LitElement,
+    html,
+    css
 } from "https://unpkg.com/lit-element/lit-element.js?module";
 import { Huffman } from "./huffman.js";
 import { RLE } from "./rle.js";
 
 const numPegs = 12 * (30 + 31); // 24 alternating rows of 30 and 31 cols.
 const colors = [
-  "blank",
-  "red",
-  "blue",
-  "orange",
-  "white",
-  "green",
-  "yellow",
-  "pink",
-  "violet"
+    "blank",
+    "red",
+    "blue",
+    "orange",
+    "white",
+    "green",
+    "yellow",
+    "pink",
+    "violet"
 ];
 
 class LitBrite extends LitElement {
-  static get properties() {
-    return {
-      colors: { type: String },
-      pegs: { type: Array },
-      colorCounts: { type: Map }
-    };
-  }
-
-  constructor() {
-    super();
-
-    this.pegs = [];
-    for (let i = 0; i < numPegs; i++) {
-      this.pegs.push({ color: "blank" });
+    static get properties() {
+        return {
+            colors: { type: String },
+            pegs: { type: Array },
+            colorCounts: { type: Map }
+        };
     }
-    this.colors = colors.map((c) => {
-      return { name: c, count: c == "blank" ? "" : 0 };
-    });
-    this.load();
-  }
 
-  // Returns a query string containing the serialized pegs, given an array of pegs.
-  packPegs(pegs) {
-    let ret = "";
-    pegs.forEach((peg) => {
-      ret += colors.indexOf(peg.color);
-    });
-    let h = Huffman.encode(ret);
-    let r = RLE.encode(ret);
-    console.log('rle len:', r.length, 'huffman len:', h.length);
-    if (r.length < h.length) {
-      return 'r=' + encodeURIComponent(r);
+    constructor() {
+        super();
+
+        this.pegs = [];
+        for (let i = 0; i < numPegs; i++) {
+            this.pegs.push({ color: "blank" });
+        }
+        this.colors = colors.map((c) => {
+            return { name: c, count: c == "blank" ? "" : 0 };
+        });
+        this.load();
     }
-    return 'h=' + encodeURIComponent(h);
-  }
 
-  // Returns an array of pegs, given a query string containing the serialized pegs.
-  unpackPegs(pegString) {
-    if (pegString.indexOf('h=') == 0) {
-      pegString = Huffman.decode(decodeURIComponent(pegString.substring(2)));
-    } else if (pegString.indexOf('r=') == 0) {
-      pegString = RLE.decode(decodeURIComponent(pegString.substring(2)));
+    // Returns a query string containing the serialized pegs, given an array of pegs.
+    packPegs(pegs) {
+        let ret = "";
+        pegs.forEach((peg) => {
+            ret += colors.indexOf(peg.color);
+        });
+        let h = Huffman.encode(ret);
+        let r = RLE.encode(ret);
+        console.log('rle len:', r.length, 'huffman len:', h.length);
+        if (r.length < h.length) {
+            return 'r=' + encodeURIComponent(r);
+        }
+        return 'h=' + encodeURIComponent(h);
     }
-    let ret = [];
-    for (let i = 0; i < pegString.length; i++) {
-      ret.push({ color: colors[Number(pegString[i])] });
+
+    // Returns an array of pegs, given a query string containing the serialized pegs.
+    unpackPegs(pegString) {
+        if (pegString.indexOf('h=') == 0) {
+            pegString = Huffman.decode(decodeURIComponent(pegString.substring(2)));
+        } else if (pegString.indexOf('r=') == 0) {
+            pegString = RLE.decode(decodeURIComponent(pegString.substring(2)));
+        }
+        let ret = [];
+        for (let i = 0; i < pegString.length; i++) {
+            ret.push({ color: colors[Number(pegString[i])] });
+        }
+        return ret;
     }
-    return ret;
-  }
 
-  save() {
-    let pegStr = this.packPegs(this.pegs);
-    history.replaceState({}, location.pathname, '?'+pegStr);
-  }
-
-  load() {
-    if (!location.search) {
-      return;
+    save() {
+        let pegStr = this.packPegs(this.pegs);
+        history.replaceState({}, location.pathname, '?' + pegStr);
     }
-    // TODO: smarter parsing for the peg string.
-    let pegStr = location.search.substr(1);
-    this.pegs = this.unpackPegs(pegStr);
-  }
 
-  static get styles() {
-    return css`
+    load() {
+        if (!location.search) {
+            return;
+        }
+        // TODO: smarter parsing for the peg string.
+        let params = {};
+        let query = location.search.substring(1);
+        let vars = query.split('&');
+        let pegStr = undefined;
+        for (let i = 0; i < vars.length; i++) {
+            let pair = vars[i].split('=');
+            params[pair[0]] = decodeURIComponent(pair[1]);
+            if (pair[0] == 'r' || pair[0] == 'h') {
+                pegStr = pair.join('=');
+            }
+        }
+        if (pegStr) {
+            this.pegs = this.unpackPegs(pegStr);
+            this.updateColorCounts();
+        }
+    }
+
+    static get styles() {
+        return css `
       :host {
         display: flex;
         flex-direction: column;
@@ -125,44 +138,50 @@ class LitBrite extends LitElement {
         margin-right: 0.25in;
       }
     `;
-  }
+    }
 
-  pegClicked(evt) {
-    let idx = Array.from(evt.target.parentNode.children).indexOf(evt.target);
-    this.pegs[idx].color = this.shadowRoot.querySelector(
-      'input[name="colorRadio"]:checked'
-    ).value;
-    this.pegs = [...this.pegs];
-    this.updateColorCounts();
-  }
+    pegClicked(evt) {
+        let idx = Array.from(evt.target.parentNode.children).indexOf(evt.target);
+        this.pegs[idx].color = this.shadowRoot.querySelector(
+            'input[name="colorRadio"]:checked'
+        ).value;
+        this.pegs = [...this.pegs];
+        this.updateColorCounts();
+    }
 
-  updateColorCounts() {
-    let counts = {};
-    this.pegs.forEach((peg) => {
-      counts[peg.color] = (counts[peg.color] || 0) + 1;
-    });
-    this.colors.forEach((color) => {
-      if (color.name != "blank") {
-        color.count = counts[color.name] || 0;
-      }
-    });
-    this.colors = [...this.colors];
-  }
+    updateColorCounts() {
+        let counts = {};
+        this.pegs.forEach((peg) => {
+            counts[peg.color] = (counts[peg.color] || 0) + 1;
+        });
+        this.colors.forEach((color) => {
+            if (color.name != "blank") {
+                color.count = counts[color.name] || 0;
+            }
+        });
+        this.colors = [...this.colors];
+    }
 
-  saveClicked(evt) {
-    this.save();    
-  }
+    saveClicked(evt) {
+        this.save();
+    }
 
-  clearClicked(evt) {
-    this.pegs.forEach((peg) => {
-      peg.color = "blank";
-    });
-    this.pegs = [...this.pegs];
-    this.updateColorCounts();
-  }
+    clearClicked(evt) {
+        this.pegs.forEach((peg) => {
+            peg.color = "blank";
+        });
+        this.pegs = [...this.pegs];
+        this.updateColorCounts();
+    }
 
-  render() {
-    return html`
+    pegMouseOver(evt) {
+        if (evt.buttons > 0) {
+            this.pegClicked(evt);
+        }
+    }
+
+    render() {
+            return html `
       <div id="controls">
         ${this.colors.map(
           (color, i) => html`<label>
@@ -183,6 +202,7 @@ class LitBrite extends LitElement {
           return html` <lit-brite-peg
             .color=${peg.color}
             @click=${this.pegClicked}
+            @mouseover=${this.pegMouseOver}
           >
           </lit-brite-peg>`;
         })}
